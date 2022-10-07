@@ -1,0 +1,63 @@
+table {
+    border: 8px solid var(--border-color);
+    padding: 8px;
+    width: 1000px;
+}
+
+td {
+    border: 4px solid var(--border-color);
+    width: 100px;
+    height: 100px;
+    text-align: center;
+}
+
+input[type="text"] {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background-color: transparent;
+}
+
+input[type="text"]:focus {
+    outline: none;
+}
+
+input[type="text"]:disabled {
+    background-color: var(--cell-disabled-background-color);
+    cursor: not-allowed;
+}
+
+.button-inner {
+    width: 1000px;
+
+    border: solid 2px var(--border-color);
+    border-top: none;
+    padding: 18px;
+    text-align: center;
+}
+
+button {
+
+    border: 2px solid #368aeb;
+    border-radius: 5px;
+    border-bottom: 5px solid #368aeb;
+
+    width: 100px;
+    height: 50px;
+
+    background-color: transparent;
+
+
+}
+
+
+button:active {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.ui-cell-crossed {
+    background-color: var(--cell-crossed);
+}
+
+
+@media (prefers-color-scheme: dark) {}
