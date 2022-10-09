@@ -1,7 +1,9 @@
 import "./assets/css/styles.css";
 
-import { fillBongo, playGame } from "./js/functions";
+import { createGame } from "./js/functions";
+const BINGO_BALLS: number = 90;
+const PLAYER_BOARD_CELLS: number = 27;
 var bongoNumbers: number[] = [];
+var players: any[] = [];
 
-fillBongo(bongoNumbers);
-playGame(bongoNumbers);
+createGame(bongoNumbers, BINGO_BALLS, players, PLAYER_BOARD_CELLS);
