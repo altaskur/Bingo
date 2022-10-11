@@ -1,3 +1,5 @@
+// Bongo functions
+
 function generateRandomNumber(bingoBalls: number): number {
   return Math.floor(Math.random() * bingoBalls);
 }
@@ -30,6 +32,8 @@ function fillBongo(bongoNumbers: number[], bingoBalls: number) {
 //     input.value = randomNumber;
 //   });
 // }
+
+// Player functions
 
 // TODO: See how to use objet type
 function addPlayer(players: any[]) {
@@ -72,6 +76,8 @@ function addPlayersBoardNumber(
   });
 }
 
+// Game functions
+
 function extractBongoBall(bongoNumbers: number[]): number {
   let randomNumber = generateRandomNumber(bongoNumbers.length);
   let bongoNumber = bongoNumbers[randomNumber];
@@ -80,7 +86,7 @@ function extractBongoBall(bongoNumbers: number[]): number {
   return bongoNumber;
 }
 
-function disablePlayerBoardNumber(
+function extractPlayerBoardNumber(
   playerNumbers: number[],
   bongoNumber: number
 ) {
@@ -95,7 +101,7 @@ function checkIfPlayersHasNumber(bongoNumber: number, players: any[]) {
     let playerBoardNumbers: number[] = player.numbers;
     if (playerBoardNumbers.includes(bongoNumber)) {
       console.log("Player: ", player.player, "has the number: ", bongoNumber);
-      player.numbers = disablePlayerBoardNumber(
+      player.numbers = extractPlayerBoardNumber(
         playerBoardNumbers,
         bongoNumber
       );
@@ -104,23 +110,57 @@ function checkIfPlayersHasNumber(bongoNumber: number, players: any[]) {
 }
 
 function checkIfPlayersHasWon(players: any[]) {
-  let test: boolean = false;
+  let isPlayerWin: boolean = false;
   players.forEach((player: any) => {
     if (player.numbers.length == 0) {
       console.log("Player: ", player.player, "has won!");
-      test = true;
+      isPlayerWin = true;
     }
   });
 
-  return test;
+  return isPlayerWin;
+}
+
+function roundBongoTurn(bongoNumbers: number[]) {
+  let bongoNumber = extractBongoBall(bongoNumbers);
+  console.log("Extracted ball: ", bongoNumber);
+  return bongoNumber;
+}
+
+function roundPlayerTurn(
+  players: any[],
+  bongoNumber: number,
+  isPlayerWin: boolean
+) {
+  checkIfPlayersHasNumber(bongoNumber, players);
+  isPlayerWin = checkIfPlayersHasWon(players);
+
+  return isPlayerWin;
+}
+
+async function test(
+  bongoNumbers: number[],
+  players: any[],
+  isPlayerWin: boolean,
+  round: number
+): Promise<any> {
+  await setTimeout(function () {
+    console.log("--------------------");
+    console.log("Round: ", round);
+    console.log("--------------------");
+    console.log("Balls in Bongo: ", bongoNumbers);
+    let bongoNumber = roundBongoTurn(bongoNumbers);
+    roundPlayerTurn(players, bongoNumber, isPlayerWin);
+  }, 100);
+  return [bongoNumbers, isPlayerWin];
 }
 
 function singBingo(bongoNumbers: number[], players: any[]) {
   console.log("Singing BINGO");
   let isPlayerWin: boolean = false;
   let round: number = 0;
-  while (bongoNumbers.length > 0 && isPlayerWin == false) {
-    round++;
+
+  while (bongoNumbers.length > 0 && !isPlayerWin) {
     console.log("--------------------");
     console.log("Round: ", round);
     console.log("--------------------");
@@ -130,10 +170,11 @@ function singBingo(bongoNumbers: number[], players: any[]) {
     console.log("Extracted ball: ", bongoNumber);
     checkIfPlayersHasNumber(bongoNumber, players);
     isPlayerWin = checkIfPlayersHasWon(players);
-  }
 
-  if (isPlayerWin != true) {
-    console.log("Machine won the game!");
+    round++;
+  }
+  if (isPlayerWin) {
+    console.log("BINGO!");
   }
 }
 
@@ -144,9 +185,11 @@ export function createGame(
   playerBoardCells: number
 ) {
   fillBongo(bongoNumbers, bingoBalls);
+
   for (let index = 0; index < 20; index++) {
     addPlayer(players);
   }
+
   addPlayersBoardNumber(players, playerBoardCells, bingoBalls);
 
   playGameButton(bongoNumbers, players);
