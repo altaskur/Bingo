@@ -155,7 +155,28 @@ async function test(
   return [bongoNumbers, isPlayerWin];
 }
 
-function singBingo(bongoNumbers: number[], players: any[]) {
+//TODO : How to use async/await with typescript with delay() like c# script by @LuisLLamas_es
+// TDarom
+// : las promesas reciben como parámetro una función
+// PiterMcFlebor
+// : Promise(callback) y al callback le pasa 2 parámetros, resolve y reject, son dos callbacks los cuales te sirven para resolver la promesa
+// TDarom
+// : dicha función acepta dos parámetros, resolve y reject
+// TDarom
+// :
+// LUL
+// TDarom
+// : resolve sirve para salir de la promesa de forma exitosa y reject de forma "errónea"
+// PiterMcFlebor: setTimeout(callback, ms) ejecuta el callback que le pases en los milisegundos indicados
+// new Promise((resolve, reject) => {
+// }).then(() => {})
+
+// By: @LuisLLamas_es
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function singBingo(bongoNumbers: number[], players: any[]) {
   console.log("Singing BINGO");
   let isPlayerWin: boolean = false;
   let round: number = 0;
@@ -172,13 +193,15 @@ function singBingo(bongoNumbers: number[], players: any[]) {
     isPlayerWin = checkIfPlayersHasWon(players);
 
     round++;
+    await delay(1000);
   }
+
   if (isPlayerWin) {
     console.log("BINGO!");
   }
 }
 
-export function createGame(
+function createGame(
   bongoNumbers: number[],
   bingoBalls: number,
   players: any[],
@@ -186,19 +209,14 @@ export function createGame(
 ) {
   fillBongo(bongoNumbers, bingoBalls);
 
-  for (let index = 0; index < 20; index++) {
+  for (let index = 0; index < 2; index++) {
     addPlayer(players);
   }
 
   addPlayersBoardNumber(players, playerBoardCells, bingoBalls);
 
-  playGameButton(bongoNumbers, players);
+  // playGameButton(bongoNumbers, players);
+  singBingo(bongoNumbers, players);
 }
 
-function playGameButton(bongoNumbers: number[], players: any[]) {
-  let startButton = <HTMLButtonElement>document.querySelector("button");
-  startButton.addEventListener("click", () => {
-    console.log("Start button clicked!");
-    singBingo(bongoNumbers, players);
-  });
-}
+module.exports = { app };
