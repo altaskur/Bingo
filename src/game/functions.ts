@@ -4,7 +4,6 @@ function generateRandomNumber(bingoBalls: number): number {
   return Math.floor(Math.random() * bingoBalls);
 }
 
-//TODO: How to make a recursive function
 function generateBongoNumber(
   bongoNumbers: number[],
   bingoBalls: number
@@ -26,16 +25,8 @@ function fillBongo(bongoNumbers: number[], bingoBalls: number) {
   console.log("Numbers in to de Bongo", bongoNumbers);
 }
 
-//   //TODO: Show the difference between .toString() and String();
-//   boardCellsInput.forEach((input) => {
-//     let randomNumber = generateRandomNumber(bingoBalls).toString();
-//     input.value = randomNumber;
-//   });
-// }
-
 // Player functions
 
-// TODO: See how to use objet type
 function addPlayer(players: any[]) {
   let playerPosition = players.length + 1;
   players.push({ player: `Player ${playerPosition}`, numbers: [] });
@@ -62,7 +53,6 @@ function addPlayersBoardNumber(
 ) {
   players.forEach((player: any) => {
     let playerBoardNumbers: number[] = player.numbers;
-    // TODO: `` string interpolation
 
     while (playerBoardNumbers.length <= playerBoardCells) {
       let randomNumber = generatePlayerBoardNumbers(
@@ -138,7 +128,7 @@ function roundPlayerTurn(
   return isPlayerWin;
 }
 
-async function test(
+export async function runGame(
   bongoNumbers: number[],
   players: any[],
   isPlayerWin: boolean,
@@ -154,22 +144,6 @@ async function test(
   }, 100);
   return [bongoNumbers, isPlayerWin];
 }
-
-//TODO : How to use async/await with typescript with delay() like c# script by @LuisLLamas_es
-// TDarom
-// : las promesas reciben como parámetro una función
-// PiterMcFlebor
-// : Promise(callback) y al callback le pasa 2 parámetros, resolve y reject, son dos callbacks los cuales te sirven para resolver la promesa
-// TDarom
-// : dicha función acepta dos parámetros, resolve y reject
-// TDarom
-// :
-// LUL
-// TDarom
-// : resolve sirve para salir de la promesa de forma exitosa y reject de forma "errónea"
-// PiterMcFlebor: setTimeout(callback, ms) ejecuta el callback que le pases en los milisegundos indicados
-// new Promise((resolve, reject) => {
-// }).then(() => {})
 
 // By: @LuisLLamas_es
 function delay(ms: number) {
@@ -201,7 +175,7 @@ async function singBingo(bongoNumbers: number[], players: any[]) {
   }
 }
 
-function createGame(
+export function createGame(
   bongoNumbers: number[],
   bingoBalls: number,
   players: any[],
@@ -218,5 +192,3 @@ function createGame(
   // playGameButton(bongoNumbers, players);
   singBingo(bongoNumbers, players);
 }
-
-module.exports = { app };
