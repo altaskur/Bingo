@@ -10,50 +10,64 @@ exports.io = new socket_io_1.Server({
 });
 var iPList = [];
 exports.io.on("connection", (socket) => {
-    console.log("Client connected ", socket.id);
-    socket.emit("log", "Client connected " + socket.id);
+    function sendLogMessage(type, user) {
+        let message = "";
+        switch (type) {
+            case "created":
+                message = `[ Created ]User ${user.id} created with IP ${user.ip}`;
+                break;
+            case "moved":
+                message = `[ Moved ] User ${user.id} moved into room ${user.ip}`;
+                break;
+            case "disconnected":
+                message = `[ Disconnected ] User ${user.id} disconnected from the server.`;
+                break;
+            case "connected":
+                message = `[ Connected ] User ${user.ip} connected with session ${user.id} to the server.`;
+                break;
+            case "admin":
+                message = `[ Admin  detected ]`;
+                break;
+            case "users":
+                message = `[ Users ] ${user.id} users connected to the server.`;
+                break;
+        }
+        exports.io.to(socket.id).emit("log", message);
+        console.log(message);
+    }
     socket.on("disconnect", (reason) => {
         console.log("Client disconnected " + socket.id + " reason", reason);
-        console.log(exports.io.engine.clientsCount);
+        console.log("Current client connections actives: ", exports.io.engine.clientsCount);
     });
+    sendLogMessage("connected", { id: socket.id, ip: socket.handshake.address });
     let userIp = socket.handshake.address;
-    if (userIp == "::ffff:127.0.0.1") {
-        exports.io.to(socket.id).emit("log", "[ ADMIN DETECTED ] " + userIp);
-        console.log("[ ADMIN DETECTED ] " + userIp);
+    if (userIp == "::1") {
+        sendLogMessage("admin", { id: socket.id, ip: userIp });
     }
-    if (!main_1.isStarted) {
+    if (!main_1.isGameStarted) {
         console.log("Game not started");
         if (!iPList.includes(userIp)) {
-            console.log("New user connected");
-            iPList.push(userIp);
-            console.log("New IP: " + userIp);
+            sendLogMessage("created", { id: socket.id, ip: userIp });
+            sendLogMessage("moved", { id: socket.id, ip: userIp });
             socket.join(userIp);
-            exports.io.to(socket.id).emit("log", "[Moved to new room] Room: " + userIp);
-            console.log("Joined room: " + userIp);
             console.log("Actual rooms:", socket.rooms);
-            console.log();
         }
         else if (exports.io.sockets.adapter.rooms.has(userIp)) {
-            console.log("User " + userIp + " already connected");
-            exports.io.to(socket.id).emit("log", "[Disconnected] User " + userIp + " already connected");
+            sendLogMessage("disconnected", { id: socket.id, ip: userIp });
             socket.disconnect();
         }
         else {
             socket.join(userIp);
-            exports.io.to(socket.id).emit("log", "[Moved to new room] Room: " + userIp);
-            console.log("Joined room: " + userIp);
+            sendLogMessage("moved", { id: socket.id, ip: userIp });
             console.log("Actual rooms:", socket.rooms);
         }
     }
     else if (exports.io.sockets.adapter.rooms.has(userIp)) {
-        console.log("User " + userIp + " already connected");
-        exports.io.to(socket.id).emit("log", "[Disconnected] User " + userIp + " already connected");
+        sendLogMessage("disconnected", { id: socket.id, ip: userIp });
         socket.disconnect();
     }
     else {
         socket.join(userIp);
-        exports.io.to(socket.id).emit("log", "[Moved to new room] Room: " + userIp);
-        console.log("Joined room: " + userIp);
-        console.log("Actual rooms:", socket.rooms);
+        sendLogMessage("moved", { id: socket.id, ip: userIp });
     }
 });

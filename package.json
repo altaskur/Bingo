@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "tsc": "tsc",
+    "tscw": "tsc -w",
     "dev": "ts-node-dev ./src/main.ts",
     "nodemon": "nodemon ./build/main.js",
     "start": "node ./build/main.js",
