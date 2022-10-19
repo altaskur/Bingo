@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.start = void 0;
-const functions_1 = require("./game/functions");
+const functions_1 = require("../game/functions");
 const BINGO_BALLS = 90;
 const PLAYER_BOARD_CELLS = 27;
 var bongoNumbers = [];

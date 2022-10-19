@@ -1,73 +1,67 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = void 0;
-const main_1 = require("../main");
 const socket_io_1 = require("socket.io");
+const log_1 = require("./functions/log");
+const data_1 = require("./functions/data");
+const general_1 = require("./functions/general");
+const functions_1 = require("../game/functions");
+var gameSettings = {
+    BINGO_BALLS: 90,
+    PLAYER_BOARD_CELLS: 27,
+    bongoNumbers: [],
+    players: [{}],
+};
 exports.io = new socket_io_1.Server({
     cors: {
         origin: "http://localhost:5173",
     },
 });
-var iPList = [];
+(0, functions_1.fillBongo)(gameSettings.bongoNumbers, gameSettings.BINGO_BALLS);
 exports.io.on("connection", (socket) => {
-    function sendLogMessage(type, user) {
-        let message = "";
-        switch (type) {
-            case "created":
-                message = `[ Created ]User ${user.id} created with IP ${user.ip}`;
-                break;
-            case "moved":
-                message = `[ Moved ] User ${user.id} moved into room ${user.ip}`;
-                break;
-            case "disconnected":
-                message = `[ Disconnected ] User ${user.id} disconnected from the server.`;
-                break;
-            case "connected":
-                message = `[ Connected ] User ${user.ip} connected with session ${user.id} to the server.`;
-                break;
-            case "admin":
-                message = `[ Admin  detected ]`;
-                break;
-            case "users":
-                message = `[ Users ] ${user.id} users connected to the server.`;
-                break;
-        }
-        exports.io.to(socket.id).emit("log", message);
-        console.log(message);
+    var player = {
+        id: socket.id,
+        ip: socket.handshake.address,
+        boardNumbers: [],
+    };
+    (0, log_1.sendLogMessage)("connected", player);
+    if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
+        (0, log_1.sendLogMessage)("admin", player);
     }
-    socket.on("disconnect", (reason) => {
-        console.log("Client disconnected " + socket.id + " reason", reason);
-        console.log("Current client connections actives: ", exports.io.engine.clientsCount);
-    });
-    sendLogMessage("connected", { id: socket.id, ip: socket.handshake.address });
-    let userIp = socket.handshake.address;
-    if (userIp == "::1") {
-        sendLogMessage("admin", { id: socket.id, ip: userIp });
-    }
-    if (!main_1.isGameStarted) {
+    if (!(0, general_1.hasGameStarted)()) {
         console.log("Game not started");
-        if (!iPList.includes(userIp)) {
-            sendLogMessage("created", { id: socket.id, ip: userIp });
-            sendLogMessage("moved", { id: socket.id, ip: userIp });
-            socket.join(userIp);
-            console.log("Actual rooms:", socket.rooms);
+        if (!(0, log_1.isPlayerRegistered)(gameSettings.players, player)) {
+            (0, log_1.sendLogMessage)("created", player);
+            (0, log_1.sendLogMessage)("moved", player);
+            socket.join(player.ip);
+            player.nickname = "Player " + gameSettings.players.length;
+            (0, functions_1.addPlayersBoardNumber)(gameSettings.PLAYER_BOARD_CELLS, gameSettings.BINGO_BALLS, player.boardNumbers);
+            (0, data_1.sendDataToPlayer)(player, player.boardNumbers);
+            gameSettings.players.push(player);
         }
-        else if (exports.io.sockets.adapter.rooms.has(userIp)) {
-            sendLogMessage("disconnected", { id: socket.id, ip: userIp });
+        else if ((0, general_1.checkRoom)(player.ip)) {
+            (0, log_1.sendLogMessage)("disconnected", player);
             socket.disconnect();
         }
         else {
-            socket.join(userIp);
-            sendLogMessage("moved", { id: socket.id, ip: userIp });
+            socket.join(player.ip);
+            (0, log_1.sendLogMessage)("moved", player);
             console.log("Actual rooms:", socket.rooms);
         }
     }
-    else if (exports.io.sockets.adapter.rooms.has(userIp)) {
-        sendLogMessage("disconnected", { id: socket.id, ip: userIp });
+    else if ((0, general_1.checkRoom)(player.ip)) {
+        (0, log_1.sendLogMessage)("disconnected", player);
         socket.disconnect();
     }
     else {
-        socket.join(userIp);
-        sendLogMessage("moved", { id: socket.id, ip: userIp });
+        console.log("Listado de jugadores", gameSettings.players);
+        console.log("Datos actuales:", player);
+        socket.join(player.ip);
+        (0, data_1.sendDataToPlayer)(player, player.boardNumbers);
+        (0, log_1.sendLogMessage)("moved", player);
     }
+    socket.on("disconnect", (reason) => {
+        console.log("Client disconnected " + player.id + " reason", reason);
+        console.log("Current client connections actives: ", (0, general_1.clientsOnline)());
+    });
 });
