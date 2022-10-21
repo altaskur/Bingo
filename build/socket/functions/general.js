@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hasGameStarted = exports.checkRoom = exports.clientsOnline = void 0;
+exports.canGameStart = exports.hasGameStarted = exports.checkRoom = exports.clientsOnline = void 0;
 const socket_1 = require("../socket");
 const main_1 = require("../../main");
 function clientsOnline() {
@@ -20,3 +20,8 @@ function hasGameStarted() {
     }
 }
 exports.hasGameStarted = hasGameStarted;
+function canGameStart(players) {
+    console.log("Players online:", players);
+    return players.length > 2 ? true : false;
+}
+exports.canGameStart = canGameStart;

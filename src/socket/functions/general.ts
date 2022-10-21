@@ -1,3 +1,4 @@
+import { Player } from "./../socket";
 import { io } from "../socket";
 import { isGameStarted } from "../../main";
 
@@ -16,4 +17,10 @@ export function hasGameStarted() {
   } else {
     return false;
   }
+}
+
+export function canGameStart(players: Player[]): boolean {
+  console.log("Players online:", players);
+
+  return players.length > 2 ? true : false;
 }

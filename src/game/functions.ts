@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+import { Player } from "./../socket/socket";
 // Bongo functions
 
 function generateRandomNumber(bingoBalls: number): number {
@@ -57,62 +59,68 @@ export function addPlayersBoardNumber(
   console.log("Player board numbers", playerBoardNumbers);
 }
 
-// // Game functions
+// Game functions
 
-// function extractBongoBall(bongoNumbers: number[]): number {
-//   let randomNumber = generateRandomNumber(bongoNumbers.length);
-//   let bongoNumber = bongoNumbers[randomNumber];
-//   bongoNumbers.splice(randomNumber, 1);
+function extractBongoBall(bongoNumbers: number[]): number {
+  let randomNumber = generateRandomNumber(bongoNumbers.length);
+  let bongoNumber = bongoNumbers[randomNumber];
+  bongoNumbers.splice(randomNumber, 1);
 
-//   return bongoNumber;
-// }
+  return bongoNumber;
+}
 
-// function extractPlayerBoardNumber(
-//   playerNumbers: number[],
-//   bongoNumber: number
-// ) {
-//   playerNumbers = playerNumbers.filter((number) => number != bongoNumber);
-//   return playerNumbers;
-// }
+function extractPlayerBoardNumber(
+  playerNumbers: number[],
+  bongoNumber: number
+): number[] {
+  playerNumbers = playerNumbers.filter((number) => number != bongoNumber);
+  return playerNumbers;
+}
 
-// function checkIfPlayersHasNumber(bongoNumber: number, players: any[]) {
-//   players.forEach((player: any) => {
-//     let playerNumbers = player.numbers;
-//     console.log(`${player.player}: `, playerNumbers);
-//     let playerBoardNumbers: number[] = player.numbers;
-//     if (playerBoardNumbers.includes(bongoNumber)) {
-//       console.log("Player: ", player.player, "has the number: ", bongoNumber);
-//       player.numbers = extractPlayerBoardNumber(
-//         playerBoardNumbers,
-//         bongoNumber
-//       );
-//     }
-//   });
-// }
+function checkIfPlayersHasNumber(bongoNumber: number, players: Player[]) {
+  //! any !!!!!!!
+  players.forEach((player: any) => {
+    let playerNumbers = player.boardNumbers;
+    console.log(`${player.ip}: `, playerNumbers);
 
-// function checkIfPlayersHasWon(players: any[]) {
-//   let isPlayerWin: boolean = false;
-//   players.forEach((player: any) => {
-//     if (player.numbers.length == 0) {
-//       console.log("Player: ", player.player, "has won!");
-//       isPlayerWin = true;
-//     }
-//   });
+    //!! any !!
+    console.log("player", player);
+    console.log("playerNumbers", player.boardNumbers);
+    let playerBoardNumbers: any = player.boardNumbers;
 
-//   return isPlayerWin;
-// }
+    if (playerBoardNumbers.includes(bongoNumber)) {
+      console.log("Player: ", player.ip, "has the number: ", bongoNumber);
+      player.boardNumbers = extractPlayerBoardNumber(
+        playerBoardNumbers,
+        bongoNumber
+      );
+    }
+  });
+}
 
-// function roundBongoTurn(bongoNumbers: number[]) {
+function checkIfPlayersHasWon(players: Player[]): boolean {
+  let isPlayerWin: boolean = false;
+  //! any !!!!!!!
+  players.forEach((player: any) => {
+    if (player.boardNumbers.length == 0) {
+      console.log("Player: ", player.ip, "has won!");
+      isPlayerWin = true;
+    }
+  });
+  return isPlayerWin;
+}
+
+// function roundBongoTurn(bongoNumbers: number[]): number {
 //   let bongoNumber = extractBongoBall(bongoNumbers);
 //   console.log("Extracted ball: ", bongoNumber);
 //   return bongoNumber;
 // }
 
 // function roundPlayerTurn(
-//   players: any[],
+//   players: Player[],
 //   bongoNumber: number,
 //   isPlayerWin: boolean
-// ) {
+// ): boolean {
 //   checkIfPlayersHasNumber(bongoNumber, players);
 //   isPlayerWin = checkIfPlayersHasWon(players);
 
@@ -121,10 +129,10 @@ export function addPlayersBoardNumber(
 
 // export async function runGame(
 //   bongoNumbers: number[],
-//   players: any[],
+//   players: Player[],
 //   isPlayerWin: boolean,
 //   round: number
-// ): Promise<any> {
+// ): Promise<boolean | [number[], boolean]> {
 //   await setTimeout(function () {
 //     console.log("--------------------");
 //     console.log("Round: ", round);
@@ -136,32 +144,45 @@ export function addPlayersBoardNumber(
 //   return [bongoNumbers, isPlayerWin];
 // }
 
-// // By: @LuisLLamas_es
-// function delay(ms: number) {
-//   return new Promise((resolve) => setTimeout(resolve, ms));
-// }
+// By: @LuisLLamas_es
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-// async function singBingo(bongoNumbers: number[], players: any[]) {
-//   console.log("Singing BINGO");
-//   let isPlayerWin: boolean = false;
-//   let round: number = 0;
+export async function singBingo(
+  bongoNumbers: number[],
+  players: Player[],
+  socket: Socket
+) {
+  // console.log("Singing BINGO");
+  let isPlayerWin: boolean = false;
+  let round: number = 0;
 
-//   while (bongoNumbers.length > 0 && !isPlayerWin) {
-//     console.log("--------------------");
-//     console.log("Round: ", round);
-//     console.log("--------------------");
-//     console.log("Balls in Bongo: ", bongoNumbers);
+  while (bongoNumbers.length > 0 && !isPlayerWin) {
+    // console.log("--------------------");
+    // console.log("Round: ", round);
+    // console.log("--------------------");
+    // console.log("Balls in Bongo: ", bongoNumbers);
 
-//     let bongoNumber = extractBongoBall(bongoNumbers);
-//     console.log("Extracted ball: ", bongoNumber);
-//     checkIfPlayersHasNumber(bongoNumber, players);
-//     isPlayerWin = checkIfPlayersHasWon(players);
+    let bongoNumber = extractBongoBall(bongoNumbers);
+    // console.log("Extracted ball: ", bongoNumber);
 
-//     round++;
-//     await delay(1000);
-//   }
+    checkIfPlayersHasNumber(bongoNumber, players);
+    isPlayerWin = checkIfPlayersHasWon(players);
 
-//   if (isPlayerWin) {
-//     console.log("BINGO!");
-//   }
-// }
+    let roundData = {
+      bongoNumber: bongoNumber,
+      checkIfPlayersHasNumber: players,
+      isPlayerWin: isPlayerWin,
+    };
+
+    socket.emit("round", roundData);
+
+    round++;
+    await delay(1000);
+  }
+
+  if (isPlayerWin) {
+    console.log("BINGO!");
+  }
+}
