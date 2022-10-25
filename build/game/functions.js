@@ -38,12 +38,13 @@ function generatePlayerBoardNumbers(playerNumbers, limitOfNumbers) {
     }
     return randomNumber;
 }
-function addPlayersBoardNumber(playerBoardCells, bongoNumbers, playerBoardNumbers) {
+function addPlayersBoardNumber(playerBoardCells, bongoNumbers) {
+    let playerBoardNumbers = [];
     while (playerBoardNumbers.length < playerBoardCells) {
         let randomNumber = generatePlayerBoardNumbers(playerBoardNumbers, bongoNumbers);
         playerBoardNumbers.push(randomNumber);
     }
-    console.log("Player board numbers", playerBoardNumbers);
+    return playerBoardNumbers;
 }
 exports.addPlayersBoardNumber = addPlayersBoardNumber;
 function extractBongoBall(bongoNumbers) {
@@ -57,6 +58,7 @@ function extractPlayerBoardNumber(playerNumbers, bongoNumber) {
     return playerNumbers;
 }
 function checkIfPlayersHasNumber(bongoNumber, players) {
+    let playersHasNumber = [];
     players.forEach((player) => {
         let playerNumbers = player.boardNumbers;
         console.log(`${player.ip}: `, playerNumbers);
@@ -65,16 +67,22 @@ function checkIfPlayersHasNumber(bongoNumber, players) {
         let playerBoardNumbers = player.boardNumbers;
         if (playerBoardNumbers.includes(bongoNumber)) {
             console.log("Player: ", player.ip, "has the number: ", bongoNumber);
+            playersHasNumber.push(player.ip);
             player.boardNumbers = extractPlayerBoardNumber(playerBoardNumbers, bongoNumber);
         }
     });
+    return playersHasNumber;
 }
 function checkIfPlayersHasWon(players) {
-    let isPlayerWin = false;
+    let isPlayerWin = {
+        hasWon: false,
+        players: [],
+    };
     players.forEach((player) => {
         if (player.boardNumbers.length == 0) {
             console.log("Player: ", player.ip, "has won!");
-            isPlayerWin = true;
+            isPlayerWin.hasWon = true;
+            isPlayerWin.players.push(player.ip);
         }
     });
     return isPlayerWin;
@@ -84,23 +92,31 @@ function delay(ms) {
 }
 function singBingo(bongoNumbers, players, socket) {
     return __awaiter(this, void 0, void 0, function* () {
-        let isPlayerWin = false;
+        let isPlayerWin = {
+            hasWon: false,
+            players: [],
+        };
+        let playerHasNumber = [];
         let round = 0;
-        while (bongoNumbers.length > 0 && !isPlayerWin) {
+        while (bongoNumbers.length > 0 && !isPlayerWin.hasWon) {
             let bongoNumber = extractBongoBall(bongoNumbers);
-            checkIfPlayersHasNumber(bongoNumber, players);
+            playerHasNumber = checkIfPlayersHasNumber(bongoNumber, players);
             isPlayerWin = checkIfPlayersHasWon(players);
             let roundData = {
+                round: round,
                 bongoNumber: bongoNumber,
-                checkIfPlayersHasNumber: players,
-                isPlayerWin: isPlayerWin,
+                playersHasNumber: playerHasNumber,
             };
             socket.emit("round", roundData);
             round++;
             yield delay(1000);
         }
-        if (isPlayerWin) {
+        if (isPlayerWin.hasWon) {
             console.log("BINGO!");
+            socket.emit("endGame", isPlayerWin.players);
+        }
+        else if (bongoNumbers.length == 0) {
+            socket.emit("endGame", isPlayerWin.players.push("Machine"));
         }
     });
 }

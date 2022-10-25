@@ -2,6 +2,17 @@ import { Socket } from "socket.io";
 import { Player } from "./../socket/socket";
 // Bongo functions
 
+interface PlayerWin {
+  hasWon: boolean;
+  players: String[];
+}
+
+interface RoundData {
+  round: number;
+  bongoNumber: number;
+  playersHasNumber: String[];
+}
+
 function generateRandomNumber(bingoBalls: number): number {
   return Math.floor(Math.random() * bingoBalls);
 }
@@ -45,9 +56,9 @@ function generatePlayerBoardNumbers(
 
 export function addPlayersBoardNumber(
   playerBoardCells: number,
-  bongoNumbers: number,
-  playerBoardNumbers: number[]
+  bongoNumbers: number
 ) {
+  let playerBoardNumbers: number[] = [];
   while (playerBoardNumbers.length < playerBoardCells) {
     let randomNumber = generatePlayerBoardNumbers(
       playerBoardNumbers,
@@ -56,7 +67,7 @@ export function addPlayersBoardNumber(
 
     playerBoardNumbers.push(randomNumber);
   }
-  console.log("Player board numbers", playerBoardNumbers);
+  return playerBoardNumbers;
 }
 
 // Game functions
@@ -77,8 +88,14 @@ function extractPlayerBoardNumber(
   return playerNumbers;
 }
 
-function checkIfPlayersHasNumber(bongoNumber: number, players: Player[]) {
+function checkIfPlayersHasNumber(
+  bongoNumber: number,
+  players: Player[]
+): String[] {
   //! any !!!!!!!
+
+  let playersHasNumber: String[] = [];
+
   players.forEach((player: any) => {
     let playerNumbers = player.boardNumbers;
     console.log(`${player.ip}: `, playerNumbers);
@@ -90,59 +107,33 @@ function checkIfPlayersHasNumber(bongoNumber: number, players: Player[]) {
 
     if (playerBoardNumbers.includes(bongoNumber)) {
       console.log("Player: ", player.ip, "has the number: ", bongoNumber);
+      playersHasNumber.push(player.ip);
       player.boardNumbers = extractPlayerBoardNumber(
         playerBoardNumbers,
         bongoNumber
       );
     }
   });
+
+  return playersHasNumber;
 }
 
-function checkIfPlayersHasWon(players: Player[]): boolean {
-  let isPlayerWin: boolean = false;
+function checkIfPlayersHasWon(players: Player[]): PlayerWin {
+  let isPlayerWin: PlayerWin = {
+    hasWon: false,
+    players: [],
+  };
+
   //! any !!!!!!!
   players.forEach((player: any) => {
     if (player.boardNumbers.length == 0) {
       console.log("Player: ", player.ip, "has won!");
-      isPlayerWin = true;
+      isPlayerWin.hasWon = true;
+      isPlayerWin.players.push(player.ip);
     }
   });
   return isPlayerWin;
 }
-
-// function roundBongoTurn(bongoNumbers: number[]): number {
-//   let bongoNumber = extractBongoBall(bongoNumbers);
-//   console.log("Extracted ball: ", bongoNumber);
-//   return bongoNumber;
-// }
-
-// function roundPlayerTurn(
-//   players: Player[],
-//   bongoNumber: number,
-//   isPlayerWin: boolean
-// ): boolean {
-//   checkIfPlayersHasNumber(bongoNumber, players);
-//   isPlayerWin = checkIfPlayersHasWon(players);
-
-//   return isPlayerWin;
-// }
-
-// export async function runGame(
-//   bongoNumbers: number[],
-//   players: Player[],
-//   isPlayerWin: boolean,
-//   round: number
-// ): Promise<boolean | [number[], boolean]> {
-//   await setTimeout(function () {
-//     console.log("--------------------");
-//     console.log("Round: ", round);
-//     console.log("--------------------");
-//     console.log("Balls in Bongo: ", bongoNumbers);
-//     let bongoNumber = roundBongoTurn(bongoNumbers);
-//     roundPlayerTurn(players, bongoNumber, isPlayerWin);
-//   }, 100);
-//   return [bongoNumbers, isPlayerWin];
-// }
 
 // By: @LuisLLamas_es
 function delay(ms: number): Promise<void> {
@@ -154,26 +145,24 @@ export async function singBingo(
   players: Player[],
   socket: Socket
 ) {
-  // console.log("Singing BINGO");
-  let isPlayerWin: boolean = false;
+  let isPlayerWin: PlayerWin = {
+    hasWon: false,
+    players: [],
+  };
+  let playerHasNumber: String[] = [];
+
   let round: number = 0;
 
-  while (bongoNumbers.length > 0 && !isPlayerWin) {
-    // console.log("--------------------");
-    // console.log("Round: ", round);
-    // console.log("--------------------");
-    // console.log("Balls in Bongo: ", bongoNumbers);
-
+  while (bongoNumbers.length > 0 && !isPlayerWin.hasWon) {
     let bongoNumber = extractBongoBall(bongoNumbers);
-    // console.log("Extracted ball: ", bongoNumber);
 
-    checkIfPlayersHasNumber(bongoNumber, players);
+    playerHasNumber = checkIfPlayersHasNumber(bongoNumber, players);
     isPlayerWin = checkIfPlayersHasWon(players);
 
-    let roundData = {
+    let roundData: RoundData = {
+      round: round,
       bongoNumber: bongoNumber,
-      checkIfPlayersHasNumber: players,
-      isPlayerWin: isPlayerWin,
+      playersHasNumber: playerHasNumber,
     };
 
     socket.emit("round", roundData);
@@ -182,7 +171,10 @@ export async function singBingo(
     await delay(1000);
   }
 
-  if (isPlayerWin) {
+  if (isPlayerWin.hasWon) {
     console.log("BINGO!");
+    socket.emit("endGame", isPlayerWin.players);
+  } else if (bongoNumbers.length == 0) {
+    socket.emit("endGame", isPlayerWin.players.push("Machine"));
   }
 }

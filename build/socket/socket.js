@@ -20,15 +20,25 @@ exports.io = new socket_io_1.Server({
     },
 });
 (0, functions_1.fillBongo)(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.BINGO_BALLS);
+function getCurrentPlayers() {
+    return GAME_SETTINGS.players.map((player) => player.nickname).filter(Boolean);
+}
+function reloadBoardNumbers(player) {
+    return GAME_SETTINGS.players
+        .filter((element) => element.ip == player.ip)
+        .map((element) => element.boardNumbers)[0];
+}
 exports.io.on("connection", (socket) => {
     let player = {
         id: socket.id,
         ip: socket.handshake.address,
         boardNumbers: [],
+        admin: false,
     };
     (0, log_1.sendLogMessage)("connected", player);
     if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
         (0, log_1.sendLogMessage)("admin", player);
+        player.admin = true;
     }
     if (!(0, general_1.hasGameStarted)()) {
         console.log("Game not started");
@@ -37,9 +47,14 @@ exports.io.on("connection", (socket) => {
             (0, log_1.sendLogMessage)("moved", player);
             socket.join(player.ip);
             player.nickname = "Player " + (GAME_SETTINGS.players.length + 1);
-            (0, functions_1.addPlayersBoardNumber)(GAME_SETTINGS.PLAYER_BOARD_CELLS, GAME_SETTINGS.BINGO_BALLS, player.boardNumbers);
-            (0, data_1.sendDataToPlayer)(player, player.boardNumbers);
+            player.boardNumbers = (0, functions_1.addPlayersBoardNumber)(GAME_SETTINGS.PLAYER_BOARD_CELLS, GAME_SETTINGS.BINGO_BALLS);
             GAME_SETTINGS.players.push(player);
+            let playerGameData = {
+                player: player,
+                players: getCurrentPlayers(),
+            };
+            console.log();
+            (0, data_1.sendDataToPlayer)(socket, playerGameData);
         }
         else if ((0, general_1.checkRoom)(player.ip)) {
             (0, log_1.sendLogMessage)("disconnected", player);
@@ -48,7 +63,13 @@ exports.io.on("connection", (socket) => {
         else {
             socket.join(player.ip);
             (0, log_1.sendLogMessage)("moved", player);
+            player.boardNumbers = reloadBoardNumbers(player);
             console.log("Actual rooms:", socket.rooms);
+            let playerGameData = {
+                player: player,
+                players: getCurrentPlayers(),
+            };
+            (0, data_1.sendDataToPlayer)(socket, playerGameData);
         }
     }
     else if ((0, general_1.checkRoom)(player.ip)) {
@@ -59,12 +80,17 @@ exports.io.on("connection", (socket) => {
         console.log("Listado de jugadores", GAME_SETTINGS.players);
         console.log("Datos actuales:", player);
         socket.join(player.ip);
-        (0, data_1.sendDataToPlayer)(player, player.boardNumbers);
+        let playerGameData = {
+            player: player,
+            players: getCurrentPlayers(),
+        };
+        (0, data_1.sendDataToPlayer)(socket, playerGameData);
         (0, log_1.sendLogMessage)("moved", player);
     }
     console.log("player", player);
     if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
         console.log("Admin detected 2");
+        player.admin = true;
         (0, data_1.enableStartGame)(socket);
     }
     socket.on("startGame", () => {

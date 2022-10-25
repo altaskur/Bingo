@@ -1,5 +1,5 @@
 import { isGameStarted } from "./../main";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 
 import { sendLogMessage, isPlayerRegistered } from "./functions/log";
 import { enableStartGame, sendDataToPlayer } from "./functions/data";
@@ -16,11 +16,16 @@ interface GameSettings {
   players: Player[];
 }
 
+export interface PlayerGameData {
+  player: Player;
+  players: (String | undefined)[];
+}
 export interface Player {
   id: string;
   ip: string;
   nickname?: string;
   boardNumbers: number[];
+  admin: boolean;
 }
 
 // TODO: var or let ?
@@ -40,6 +45,20 @@ export const io = new Server({
 
 fillBongo(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.BINGO_BALLS);
 
+function getCurrentPlayers(): (string | undefined)[] {
+  //TODO differences filter vs map
+
+  return GAME_SETTINGS.players.map((player) => player.nickname).filter(Boolean);
+
+  // playersNickname = GAME_SETTINGS.players.filter((player) => player.nickname);
+}
+
+function reloadBoardNumbers(player: Player) {
+  return GAME_SETTINGS.players
+    .filter((element) => element.ip == player.ip)
+    .map((element) => element.boardNumbers)[0];
+}
+
 io.on("connection", (socket) => {
   // Storage socket session data
   let player: Player = {
@@ -47,7 +66,9 @@ io.on("connection", (socket) => {
     //TODO: get socket connection IP
     ip: socket.handshake.address,
     boardNumbers: [],
+    admin: false,
   };
+
   sendLogMessage("connected", player);
 
   // Check if the user is an admin
@@ -55,6 +76,7 @@ io.on("connection", (socket) => {
   //TODO: why socket.handshake.address change ip format ?
   if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
     sendLogMessage("admin", player);
+    player.admin = true;
   }
 
   if (!hasGameStarted()) {
@@ -65,15 +87,19 @@ io.on("connection", (socket) => {
       sendLogMessage("moved", player);
       socket.join(player.ip);
       player.nickname = "Player " + (GAME_SETTINGS.players.length + 1);
-      addPlayersBoardNumber(
+      player.boardNumbers = addPlayersBoardNumber(
         GAME_SETTINGS.PLAYER_BOARD_CELLS,
-        GAME_SETTINGS.BINGO_BALLS,
-        player.boardNumbers
+        GAME_SETTINGS.BINGO_BALLS
       );
 
-      sendDataToPlayer(player, player.boardNumbers);
-
       GAME_SETTINGS.players.push(player);
+
+      let playerGameData: PlayerGameData = {
+        player: player,
+        players: getCurrentPlayers(),
+      };
+      console.log();
+      sendDataToPlayer(socket, playerGameData);
 
       //TODO: check rooms in socket
     } else if (checkRoom(player.ip)) {
@@ -82,7 +108,17 @@ io.on("connection", (socket) => {
     } else {
       socket.join(player.ip);
       sendLogMessage("moved", player);
+
+      // reload player board numbers
+      player.boardNumbers = reloadBoardNumbers(player);
+
       console.log("Actual rooms:", socket.rooms);
+
+      let playerGameData: PlayerGameData = {
+        player: player,
+        players: getCurrentPlayers(),
+      };
+      sendDataToPlayer(socket, playerGameData);
     }
   } else if (checkRoom(player.ip)) {
     sendLogMessage("disconnected", player);
@@ -91,7 +127,14 @@ io.on("connection", (socket) => {
     console.log("Listado de jugadores", GAME_SETTINGS.players);
     console.log("Datos actuales:", player);
     socket.join(player.ip);
-    sendDataToPlayer(player, player.boardNumbers);
+
+    let playerGameData: PlayerGameData = {
+      player: player,
+      players: getCurrentPlayers(),
+    };
+
+    sendDataToPlayer(socket, playerGameData);
+
     sendLogMessage("moved", player);
   }
 
@@ -101,6 +144,7 @@ io.on("connection", (socket) => {
 
   if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
     console.log("Admin detected 2");
+    player.admin = true;
     enableStartGame(socket);
   }
 
