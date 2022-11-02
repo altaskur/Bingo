@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = void 0;
 const main_1 = require("./../main");
 const socket_io_1 = require("socket.io");
+const http_1 = require("http");
 const log_1 = require("./functions/log");
 const data_1 = require("./functions/data");
 const general_1 = require("./functions/general");
@@ -14,9 +15,10 @@ const GAME_SETTINGS = {
     isGameStarted: main_1.isGameStarted,
     players: [],
 };
-exports.io = new socket_io_1.Server({
+const httpServer = (0, http_1.createServer)();
+exports.io = new socket_io_1.Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*",
     },
 });
 (0, functions_1.fillBongo)(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.BINGO_BALLS);
@@ -34,6 +36,7 @@ exports.io.on("connection", (socket) => {
         ip: socket.handshake.address,
         boardNumbers: [],
         admin: false,
+        nickname: "",
     };
     (0, log_1.sendLogMessage)("connected", player);
     if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
@@ -54,7 +57,7 @@ exports.io.on("connection", (socket) => {
                 players: getCurrentPlayers(),
             };
             console.log();
-            (0, data_1.sendDataToPlayer)(socket, playerGameData);
+            (0, data_1.sendDataToPlayer)(playerGameData);
         }
         else if ((0, general_1.checkRoom)(player.ip)) {
             (0, log_1.sendLogMessage)("disconnected", player);
@@ -69,7 +72,7 @@ exports.io.on("connection", (socket) => {
                 player: player,
                 players: getCurrentPlayers(),
             };
-            (0, data_1.sendDataToPlayer)(socket, playerGameData);
+            (0, data_1.sendDataToPlayer)(playerGameData);
         }
     }
     else if ((0, general_1.checkRoom)(player.ip)) {
@@ -84,12 +87,13 @@ exports.io.on("connection", (socket) => {
             player: player,
             players: getCurrentPlayers(),
         };
-        (0, data_1.sendDataToPlayer)(socket, playerGameData);
+        (0, data_1.sendDataToPlayer)(playerGameData);
         (0, log_1.sendLogMessage)("moved", player);
     }
     console.log("player", player);
-    if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
-        console.log("Admin detected 2");
+    if (player.ip == "::1" ||
+        player.ip == "::ffff:127.0.0.1") {
+        console.log("Admin detected");
         player.admin = true;
         (0, data_1.enableStartGame)(socket);
     }

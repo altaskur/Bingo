@@ -4,10 +4,9 @@ import { PlayerGameData } from "./../socket";
 
 // TODO: Data is a generic type, it can be any type of data
 export function sendDataToPlayer(
-  socket: Socket,
-  playerGameData: PlayerGameData
+  playerGameData: PlayerGameData,
 ) {
-  io.to(socket.id).emit("game", playerGameData);
+  io.emit("game", playerGameData);
 }
 
 export function enableStartGame(socket: Socket) {

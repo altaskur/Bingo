@@ -1,5 +1,6 @@
 import { Socket } from "socket.io";
 import { Player } from "./../socket/socket";
+import { io } from "../socket/socket";
 // Bongo functions
 
 interface PlayerWin {
@@ -165,7 +166,7 @@ export async function singBingo(
       playersHasNumber: playerHasNumber,
     };
 
-    socket.emit("round", roundData);
+    io.emit("round", roundData);
 
     round++;
     await delay(1000);

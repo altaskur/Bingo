@@ -1,6 +1,6 @@
 import { isGameStarted } from "./../main";
 import { Server } from "socket.io";
-
+import { createServer } from "http";
 import { sendLogMessage, isPlayerRegistered } from "./functions/log";
 import { enableStartGame, sendDataToPlayer } from "./functions/data";
 import { clientsOnline, checkRoom, hasGameStarted } from "./functions/general";
@@ -18,12 +18,12 @@ interface GameSettings {
 
 export interface PlayerGameData {
   player: Player;
-  players: (String | undefined)[];
+  players: string[];
 }
 export interface Player {
   id: string;
   ip: string;
-  nickname?: string;
+  nickname: string;
   boardNumbers: number[];
   admin: boolean;
 }
@@ -36,17 +36,16 @@ const GAME_SETTINGS: GameSettings = {
   isGameStarted,
   players: [],
 };
-
-export const io = new Server({
+const httpServer = createServer();
+export const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
   },
 });
 
 fillBongo(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.BINGO_BALLS);
 
-function getCurrentPlayers(): (string | undefined)[] {
-  //TODO differences filter vs map
+function getCurrentPlayers(): string[] {
 
   return GAME_SETTINGS.players.map((player) => player.nickname).filter(Boolean);
 
@@ -67,6 +66,7 @@ io.on("connection", (socket) => {
     ip: socket.handshake.address,
     boardNumbers: [],
     admin: false,
+    nickname: "",
   };
 
   sendLogMessage("connected", player);
@@ -99,7 +99,7 @@ io.on("connection", (socket) => {
         players: getCurrentPlayers(),
       };
       console.log();
-      sendDataToPlayer(socket, playerGameData);
+      sendDataToPlayer(playerGameData);
 
       //TODO: check rooms in socket
     } else if (checkRoom(player.ip)) {
@@ -118,7 +118,7 @@ io.on("connection", (socket) => {
         player: player,
         players: getCurrentPlayers(),
       };
-      sendDataToPlayer(socket, playerGameData);
+      sendDataToPlayer( playerGameData);
     }
   } else if (checkRoom(player.ip)) {
     sendLogMessage("disconnected", player);
@@ -133,7 +133,7 @@ io.on("connection", (socket) => {
       players: getCurrentPlayers(),
     };
 
-    sendDataToPlayer(socket, playerGameData);
+    sendDataToPlayer(playerGameData);
 
     sendLogMessage("moved", player);
   }
@@ -142,8 +142,11 @@ io.on("connection", (socket) => {
 
   // if (canGameStart(GAME_SETTINGS.players)) {
 
-  if (player.ip == "::1" || player.ip == "::ffff:127.0.0.1") {
-    console.log("Admin detected 2");
+  if (
+    player.ip == "::1" ||
+    player.ip == "::ffff:127.0.0.1"
+  ) {
+    console.log("Admin detected");
     player.admin = true;
     enableStartGame(socket);
   }

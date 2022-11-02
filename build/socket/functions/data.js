@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enableStartGame = exports.sendDataToPlayer = void 0;
 const socket_1 = require("./../socket");
-function sendDataToPlayer(socket, playerGameData) {
-    socket_1.io.to(socket.id).emit("game", playerGameData);
+function sendDataToPlayer(playerGameData) {
+    socket_1.io.emit("game", playerGameData);
 }
 exports.sendDataToPlayer = sendDataToPlayer;
 function enableStartGame(socket) {

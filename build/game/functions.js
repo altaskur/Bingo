@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.singBingo = exports.addPlayersBoardNumber = exports.fillBongo = void 0;
+const socket_1 = require("../socket/socket");
 function generateRandomNumber(bingoBalls) {
     return Math.floor(Math.random() * bingoBalls);
 }
@@ -107,7 +108,7 @@ function singBingo(bongoNumbers, players, socket) {
                 bongoNumber: bongoNumber,
                 playersHasNumber: playerHasNumber,
             };
-            socket.emit("round", roundData);
+            socket_1.io.emit("round", roundData);
             round++;
             yield delay(1000);
         }

@@ -1,6 +1,3 @@
-//const app = require("./express/express.js");
-// const io = require("./socket/socket.js");
-
 import { io } from "./socket/socket";
 import { app } from "./express/express";
 // import { run } from "./mainGame";
