@@ -99,8 +99,11 @@ exports.io.on("connection", (socket) => {
     }
     socket.on("startGame", () => {
         console.log("Game started");
-        GAME_SETTINGS.isGameStarted = true;
-        (0, functions_1.singBingo)(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.players, socket);
+        if (!GAME_SETTINGS.isGameStarted) {
+            GAME_SETTINGS.isGameStarted = true;
+            (0, functions_1.singBingo)(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.players, socket);
+            socket.emit("gameStarted", true);
+        }
     });
     socket.on("disconnect", (reason) => {
         console.log("Client disconnected " + player.id + " reason", reason);

@@ -99,7 +99,7 @@ function checkIfPlayersHasNumber(
 
   players.forEach((player: any) => {
     let playerNumbers = player.boardNumbers;
-    console.log(`${player.ip}: `, playerNumbers);
+    console.log(`${player.nickname}: `, playerNumbers);
 
     //!! any !!
     console.log("player", player);
@@ -107,8 +107,8 @@ function checkIfPlayersHasNumber(
     let playerBoardNumbers: any = player.boardNumbers;
 
     if (playerBoardNumbers.includes(bongoNumber)) {
-      console.log("Player: ", player.ip, "has the number: ", bongoNumber);
-      playersHasNumber.push(player.ip);
+      console.log("Player: ", player.nickname, "has the number: ", bongoNumber);
+      playersHasNumber.push(player.nickname);
       player.boardNumbers = extractPlayerBoardNumber(
         playerBoardNumbers,
         bongoNumber
@@ -128,9 +128,9 @@ function checkIfPlayersHasWon(players: Player[]): PlayerWin {
   //! any !!!!!!!
   players.forEach((player: any) => {
     if (player.boardNumbers.length == 0) {
-      console.log("Player: ", player.ip, "has won!");
+      console.log("Player: ", player.nickname, "has won!");
       isPlayerWin.hasWon = true;
-      isPlayerWin.players.push(player.ip);
+      isPlayerWin.players.push(player.nickname);
     }
   });
   return isPlayerWin;

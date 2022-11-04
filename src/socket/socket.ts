@@ -140,7 +140,6 @@ io.on("connection", (socket) => {
 
   console.log("player", player);
 
-  // if (canGameStart(GAME_SETTINGS.players)) {
 
   if (
     player.ip == "::1" ||
@@ -153,13 +152,29 @@ io.on("connection", (socket) => {
 
   socket.on("startGame", () => {
     console.log("Game started");
-    GAME_SETTINGS.isGameStarted = true;
-    singBingo(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.players, socket);
+
+    if (!GAME_SETTINGS.isGameStarted){
+      GAME_SETTINGS.isGameStarted = true;
+      singBingo(GAME_SETTINGS.bongoNumbers, GAME_SETTINGS.players, socket);
+      socket.emit("gameStarted", true);
+    }
+
   });
-  // }
+
 
   socket.on("disconnect", (reason) => {
     console.log("Client disconnected " + player.id + " reason", reason);
     console.log("Current client connections actives: ", clientsOnline());
   });
+
 });
+
+// TODO RashPheck no eliminar los números del carton sino duplicar y manter la posicion inicial
+
+// TODO: ¿por que tira dos veces al usuario cuando el juego esta iniciado?
+
+// TODO: Añadir nuevo estado finalizado, para mandar los datos de los jugadores incluso cuando se desconecten
+
+// TODO: hacer que los numero del cartón se den la vuelta.
+
+
